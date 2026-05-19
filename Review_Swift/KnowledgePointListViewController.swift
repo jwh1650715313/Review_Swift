@@ -18,6 +18,13 @@ final class KnowledgePointListViewController: UITableViewController {
 
     private let knowledgePoints: [KnowledgePoint] = [
         KnowledgePoint(
+            title: "Swift 基础高频面试题",
+            subtitle: "Optional、protocol、closure、COW、lazy、static、final",
+            makeViewController: {
+                SwiftFoundationInterviewViewController()
+            }
+        ),
+        KnowledgePoint(
             title: "struct 与 class 的区别",
             subtitle: "值类型、引用类型、继承、mutating、deinit",
             makeViewController: {
@@ -29,6 +36,48 @@ final class KnowledgePointListViewController: UITableViewController {
             subtitle: "ARC 持有关系、自动置 nil、生命周期约束",
             makeViewController: {
                 StrongWeakUnownedReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "UIViewController ARC 内存管理",
+            subtitle: "循环引用、weak、闭包、Timer、通知、cell 复用",
+            makeViewController: {
+                ARCInterviewReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "MQTT 面试八股",
+            subtitle: "Broker、Topic、QoS、retain、长连接、IoT 场景",
+            makeViewController: {
+                MQTTInterviewReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "UITableView 面试宝典",
+            subtitle: "复用、刷新、动态高度、卡顿、RunLoop、Instruments",
+            makeViewController: {
+                UITableViewInterviewReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "UIKit 高频面试题",
+            subtitle: "View/Controller 生命周期、AutoLayout、响应链、手势冲突",
+            makeViewController: {
+                UIKitInterviewReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "iOS 数据持久化面试宝典",
+            subtitle: "UserDefaults、FileManager、Keychain、SQLite/CoreData、Codable",
+            makeViewController: {
+                DataPersistenceInterviewReviewViewController()
+            }
+        ),
+        KnowledgePoint(
+            title: "iOS 多线程面试知识点",
+            subtitle: "GCD、队列、死锁、锁、Group、RunLoop、OperationQueue",
+            makeViewController: {
+                MultithreadingInterviewReviewViewController()
             }
         )
     ]

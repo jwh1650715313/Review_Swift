@@ -7,204 +7,305 @@
 
 import UIKit
 
-final class StructClassReviewViewController: UIViewController {
+final class StructClassReviewViewController: InterviewReviewListViewController {
 
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.alwaysBounceVertical = true
-        return scrollView
-    }()
-
-    private let contentLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.numberOfLines = 0
-        label.adjustsFontForContentSizeCategory = true
-        return label
-    }()
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        if title == nil {
-            title = "struct 与 class 的区别"
-        }
-        view.backgroundColor = .systemBackground
-
-        setupViews()
-
-        let output = runStructAndClassDemo()
-        contentLabel.attributedText = output
-        print(output.string)
+    init() {
+        super.init(
+            pageTitle: "struct 与 class 的区别",
+            modules: Self.makeModules()
+        )
     }
 
-    private func setupViews() {
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentLabel)
-
-        NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-
-            contentLabel.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 20),
-            contentLabel.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -20),
-            contentLabel.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 24),
-            contentLabel.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentLabel.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40)
-        ])
-    }
-
-    private func runStructAndClassDemo() -> NSAttributedString {
-        let result = NSMutableAttributedString()
-
-        appendSectionTitle("1. struct：值类型", color: .systemBlue, to: result)
-        appendKeyValue("重点", "复制时会产生一份新值，修改副本不影响原值。", color: .systemBlue, to: result)
-        let structA = StructPerson(name: "小明", age: 18)
-        var structB = structA
-        structB.age = 20
-        appendCode("var structB = structA", to: result)
-        appendCode("structB.age = 20", to: result)
-        appendCode("structA.age = \(structA.age)", to: result)
-        appendCode("structB.age = \(structB.age)", to: result)
-        appendKeyValue("结论", "structA 仍然是 18。", color: .systemGreen, to: result)
-        appendBlankLine(to: result)
-
-        appendSectionTitle("2. class：引用类型", color: .systemOrange, to: result)
-        appendKeyValue("重点", "复制的是引用，两个变量指向同一个对象。", color: .systemOrange, to: result)
-        let classA = ClassPerson(name: "小红", age: 18)
-        let classB = classA
-        classB.age = 20
-        appendCode("let classB = classA", to: result)
-        appendCode("classB.age = 20", to: result)
-        appendCode("classA.age = \(classA.age)", to: result)
-        appendCode("classB.age = \(classB.age)", to: result)
-        appendKeyValue("结论", "classA 也变成 20。", color: .systemRed, to: result)
-        appendBlankLine(to: result)
-
-        appendSectionTitle("3. class：有对象身份", color: .systemPurple, to: result)
-        appendKeyValue("重点", "class 可以用 === 判断两个引用是否指向同一个对象。", color: .systemPurple, to: result)
-        appendCode("classA === classB -> \(classA === classB)", to: result)
-        appendKeyValue("对比", "struct 没有对象身份，所以不能用 ===。", color: .systemPurple, to: result)
-        appendBlankLine(to: result)
-
-        appendSectionTitle("4. struct：修改自身需要 mutating", color: .systemIndigo, to: result)
-        appendKeyValue("重点", "struct 的方法默认不能修改自身属性，想改必须加 mutating。", color: .systemIndigo, to: result)
-        var structC = StructPerson(name: "小刚", age: 21)
-        structC.birthday()
-        classA.birthday()
-        appendCode("structC.birthday() 后 age = \(structC.age)", to: result)
-        appendCode("classA.birthday() 后 age = \(classA.age)", to: result)
-        appendKeyValue("对比", "class 方法修改属性不需要 mutating。", color: .systemIndigo, to: result)
-        appendBlankLine(to: result)
-
-        appendSectionTitle("5. class：支持继承", color: .systemGreen, to: result)
-        appendKeyValue("重点", "class 可以继承；struct 不支持继承。", color: .systemGreen, to: result)
-        let student = Student(name: "小美", age: 19, school: "Swift 大学")
-        appendCode("\(student.name) 是 ClassPerson 的子类 Student", to: result)
-        appendCode("school = \(student.school)", to: result)
-        appendBlankLine(to: result)
-
-        appendSectionTitle("6. class：有 deinit", color: .systemRed, to: result)
-        appendKeyValue("重点", "class 对象释放时会调用 deinit；struct 没有 deinit。", color: .systemRed, to: result)
-        createTemporaryClassPerson()
-        appendCode("临时 class 对象离开作用域后会触发 deinit", to: result)
-        appendBlankLine(to: result)
-
-        appendSummary(to: result)
-
-        return result
-    }
-
-    private func createTemporaryClassPerson() {
-        let temporaryPerson = ClassPerson(name: "临时对象", age: 1)
-        print("创建临时 class 对象：\(temporaryPerson.name)")
-    }
-
-    private func appendSectionTitle(_ text: String, color: UIColor, to result: NSMutableAttributedString) {
-        append(text + "\n", font: .systemFont(ofSize: 20, weight: .bold), color: color, to: result)
-    }
-
-    private func appendKeyValue(_ key: String, _ value: String, color: UIColor, to result: NSMutableAttributedString) {
-        append(key + "：", font: .systemFont(ofSize: 16, weight: .bold), color: color, to: result)
-        append(value + "\n", font: .systemFont(ofSize: 16, weight: .regular), color: .label, to: result)
-    }
-
-    private func appendCode(_ text: String, to result: NSMutableAttributedString) {
-        append(text + "\n", font: .monospacedSystemFont(ofSize: 15, weight: .medium), color: .secondaryLabel, to: result)
-    }
-
-    private func appendBlankLine(to result: NSMutableAttributedString) {
-        append("\n", font: .systemFont(ofSize: 8), color: .label, to: result)
-    }
-
-    private func appendSummary(to result: NSMutableAttributedString) {
-        append("总结\n", font: .systemFont(ofSize: 20, weight: .bold), color: .label, to: result)
-        appendKeyValue("struct", "值类型，复制后互不影响，适合数据模型。", color: .systemBlue, to: result)
-        appendKeyValue("class", "引用类型，多个变量可共享同一个对象，适合需要身份和生命周期的对象。", color: .systemOrange, to: result)
-        appendKeyValue("面试重点", "值类型/引用类型是核心区别，继承、deinit、=== 都是 class 特有能力。", color: .systemRed, to: result)
-    }
-
-    private func append(
-        _ text: String,
-        font: UIFont,
-        color: UIColor,
-        to result: NSMutableAttributedString
-    ) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 4
-        paragraphStyle.paragraphSpacing = 2
-
-        result.append(
-            NSAttributedString(
-                string: text,
-                attributes: [
-                    .font: font,
-                    .foregroundColor: color,
-                    .paragraphStyle: paragraphStyle
-                ]
-            )
+    required init?(coder: NSCoder) {
+        super.init(
+            pageTitle: "struct 与 class 的区别",
+            modules: Self.makeModules()
         )
     }
 }
 
-struct StructPerson {
+private extension StructClassReviewViewController {
 
-    var name: String
-    var age: Int
+    static func makeModules() -> [InterviewReviewModule] {
+        [
+            InterviewReviewModule(
+                id: "value-reference",
+                title: "值类型 vs 引用类型",
+                subtitle: "复制行为、共享对象、对象身份判断",
+                symbolName: "arrow.left.arrow.right.circle.fill",
+                tintColor: InterviewReviewStyle.accentColors[0],
+                items: makeValueReferenceItems()
+            ),
+            InterviewReviewModule(
+                id: "language-features",
+                title: "语法能力差异",
+                subtitle: "mutating、继承、deinit、生命周期",
+                symbolName: "curlybraces.square.fill",
+                tintColor: InterviewReviewStyle.accentColors[1],
+                items: makeLanguageFeatureItems()
+            ),
+            InterviewReviewModule(
+                id: "interview-summary",
+                title: "面试总结",
+                subtitle: "一句话说清核心取舍和使用建议",
+                symbolName: "checkmark.seal.fill",
+                tintColor: InterviewReviewStyle.accentColors[2],
+                items: makeSummaryItems()
+            )
+        ]
+    }
 
-    mutating func birthday() {
-        age += 1
+    static func makeValueReferenceItems() -> [InterviewReviewItem] {
+        let structResult = makeStructCopyResult()
+        let classResult = makeClassReferenceResult()
+
+        return [
+            InterviewReviewItem(
+                title: "struct 是值类型",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "struct 赋值或传参时会复制一份新值。后续修改副本，不会影响原来的变量。",
+                        symbolName: "lightbulb.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: structResult,
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "标准答案",
+                        body: "值类型强调数据本身，每个变量拥有自己的值。常见值类型包括 struct、enum、Int、String、Array、Dictionary。",
+                        symbolName: "checkmark.seal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "使用场景",
+                        body: "适合用户信息、订单模型、配置项、坐标、尺寸等主要表达数据的模型。",
+                        symbolName: "briefcase.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "struct 复制的是值，副本改了，原值不动。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            ),
+            InterviewReviewItem(
+                title: "class 是引用类型",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "class 赋值或传参时复制的是引用。多个变量可能指向同一个对象，任何一个引用修改对象，其他引用看到的也是修改后的状态。",
+                        symbolName: "lightbulb.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: classResult,
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "标准答案",
+                        body: "引用类型强调对象身份和共享状态。class 实例通常放在堆上，通过引用访问，由 ARC 管理生命周期。",
+                        symbolName: "checkmark.seal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "使用场景",
+                        body: "适合控制器、ViewModel、网络管理器、缓存对象、播放器、数据库连接等需要共享状态或生命周期管理的对象。",
+                        symbolName: "briefcase.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "class 复制的是引用，一个对象，多处入口。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            ),
+            InterviewReviewItem(
+                title: "class 有对象身份",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "对象身份表示“是不是同一个对象”。class 可以用 === 判断两个引用是否指向同一个实例。",
+                        symbolName: "person.2.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: "let b = a\nprint(a === b) // true\n\nstruct 没有对象身份，不能使用 ===。",
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "标准答案",
+                        body: "struct 比较的是值是否相等，需要自己遵守 Equatable；class 除了内容相等，还可以判断两个引用是否是同一个对象。",
+                        symbolName: "checkmark.seal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "=== 是 class 的身份比较，不是 struct 的值比较。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            )
+        ]
+    }
+
+    static func makeLanguageFeatureItems() -> [InterviewReviewItem] {
+        [
+            InterviewReviewItem(
+                title: "struct 修改自身需要 mutating",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "struct 的实例方法默认不能修改自身属性。如果方法会改变 self 或属性，必须标记 mutating。",
+                        symbolName: "pencil.circle.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: "struct User {\n    var age: Int\n\n    mutating func birthday() {\n        age += 1\n    }\n}",
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "对比 class",
+                        body: "class 方法修改属性不需要 mutating，因为 class 实例通过引用访问，方法默认可以修改对象内部状态。",
+                        symbolName: "arrow.triangle.2.circlepath"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "struct 想在方法里改自己，就要 mutating。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            ),
+            InterviewReviewItem(
+                title: "class 支持继承",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "class 可以继承父类，复用和重写父类能力；struct 不支持继承，只能通过 protocol 和组合扩展能力。",
+                        symbolName: "point.3.connected.trianglepath.dotted"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: "class Person {}\nclass Student: Person {}\n\nstruct User {}\n// struct Student: User 不能这样写",
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "标准答案",
+                        body: "Swift 更鼓励值类型、协议和组合。只有需要共享身份、继承体系或 Objective-C 互操作时，class 才更合适。",
+                        symbolName: "checkmark.seal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "class 能继承，struct 靠协议和组合。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            ),
+            InterviewReviewItem(
+                title: "class 有 deinit",
+                rows: [
+                    InterviewReviewRow(
+                        title: "核心概念",
+                        body: "class 实例释放前会调用 deinit，可以用来清理定时器、通知、任务、文件句柄等资源。struct 没有 deinit。",
+                        symbolName: "trash.circle.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "代码验证",
+                        body: "class Person {\n    deinit {\n        print(\"对象被销毁\")\n    }\n}",
+                        symbolName: "terminal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "面试追问",
+                        body: "页面 pop 后 deinit 不走，通常要查闭包强持有 self、Timer、Notification block、delegate strong、单例缓存和异步任务。",
+                        symbolName: "questionmark.circle.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "deinit 是 class 生命周期结束的证明。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            )
+        ]
+    }
+
+    static func makeSummaryItems() -> [InterviewReviewItem] {
+        [
+            InterviewReviewItem(
+                title: "怎么选择 struct 和 class",
+                rows: [
+                    InterviewReviewRow(
+                        title: "优先选择",
+                        body: "默认优先 struct，尤其是纯数据模型。值类型更容易推理，不容易被别处意外修改。",
+                        symbolName: "star.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "选择 class",
+                        body: "需要继承、对象身份、共享可变状态、生命周期管理、引用语义或 Objective-C 互操作时，选择 class。",
+                        symbolName: "person.crop.circle.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "面试标准话术",
+                        body: "核心区别是 struct 是值类型，class 是引用类型；class 还有继承、deinit、=== 身份比较，struct 修改自身方法需要 mutating。",
+                        symbolName: "checkmark.seal.fill"
+                    ),
+                    InterviewReviewRow(
+                        title: "一句话速记",
+                        body: "struct 管数据，class 管身份和生命周期。",
+                        symbolName: "bolt.fill",
+                        isMemoryLine: true
+                    )
+                ]
+            )
+        ]
+    }
+
+    static func makeStructCopyResult() -> String {
+        let structA = StructExamplePerson(name: "小明", age: 18)
+        var structB = structA
+        structB.age = 20
+
+        return """
+        var structB = structA
+        structB.age = 20
+        structA.age = \(structA.age)
+        structB.age = \(structB.age)
+        """
+    }
+
+    static func makeClassReferenceResult() -> String {
+        let classA = ClassExamplePerson(name: "小红", age: 18)
+        let classB = classA
+        classB.age = 20
+
+        return """
+        let classB = classA
+        classB.age = 20
+        classA.age = \(classA.age)
+        classB.age = \(classB.age)
+        classA === classB -> \(classA === classB)
+        """
     }
 }
 
-class ClassPerson {
+private struct StructExamplePerson {
 
-    var name: String
+    let name: String
+    var age: Int
+}
+
+private final class ClassExamplePerson {
+
+    let name: String
     var age: Int
 
     init(name: String, age: Int) {
         self.name = name
         self.age = age
-    }
-
-    func birthday() {
-        age += 1
-    }
-
-    deinit {
-        print("deinit: \(name) 被销毁")
-    }
-}
-
-class Student: ClassPerson {
-
-    let school: String
-
-    init(name: String, age: Int, school: String) {
-        self.school = school
-        super.init(name: name, age: age)
     }
 }
